@@ -1,0 +1,89 @@
+use std::f64;
+
+// Define a struct to hold the result of RK4
+#[allow(dead_code)]
+struct RK4Result {
+    t_values: Vec<f64>,     // Stores time values
+    y_values: Vec<Vec<f64>>, // Stores solution values at each time step
+}
+
+
+// Implement RK4 for a given function f
+fn rk4<F>(f: F, n: usize, y0: Vec<f64>, t0: f64, t_end: f64) -> RK4Result
+where
+    F: Fn(&[f64], f64) -> Vec<f64>, // Generic trait for the function f
+{
+    // Initialize vectors to store time and solution values
+    let mut t_values = vec![t0]; // Start time
+    let mut y_values = vec![y0.clone()]; // Initial solution value (clone to preserve original)
+    let h = (t_end - t0) / (n as f64); // Calculate step size
+
+    // Print initial condition
+    println!("At t = {:.4}, value of y is = {:?}", t0, y0);
+
+    // Perform RK4 iterations
+    for _ in 0..n {
+        let ti = *t_values.last().unwrap(); // Get the last time value
+        let yi = y_values.last().unwrap().clone(); // Get the last solution value (clone to avoid moving)
+        let k1 = scalar_multiply(h, &f(&yi, ti)); // Compute slopes
+        let k2 = scalar_multiply(h, &f(&vector_add(&yi, &scalar_multiply(0.5, &k1)), ti + 0.5 * h));
+        let k3 = scalar_multiply(h, &f(&vector_add(&yi, &scalar_multiply(0.5, &k2)), ti + 0.5 * h));
+        let k4 = scalar_multiply(h, &f(&vector_add(&yi, &k3), ti + h));
+        let y_i_plus_1 = vector_add(
+            &yi,
+            &scalar_multiply(
+                1.0 / 6.0,
+                &vector_add(&k1, &vector_add(&scalar_multiply(2.0, &k2), &vector_add(&scalar_multiply(2.0, &k3), &k4))),
+            ),
+        ); // Compute next solution value
+        let ti_plus_1 = ti + h; // Compute next time value
+        println!("for t = {:.4}, value of y is = {:?}", ti_plus_1, y_i_plus_1);
+
+        // Store the next time and solution values
+        t_values.push(ti_plus_1);
+        y_values.push(y_i_plus_1);
+    }
+
+    // Return the result
+    RK4Result { t_values, y_values }
+}
+
+// Scalar multiplication of a vector with a scalar
+fn scalar_multiply(scalar: f64, vector: &[f64]) -> Vec<f64> {
+    vector.iter().map(|&x| x * scalar).collect()
+}
+
+// Vector addition
+fn vector_add(vec1: &[f64], vec2: &[f64]) -> Vec<f64> {
+    vec1.iter().zip(vec2.iter()).map(|(&x, &y)| x + y).collect()
+}
+
+// Define the function f(y, t)
+fn f(y: &[f64], _t: f64) -> Vec<f64> {
+    let n = y.len();
+    let mut dydt = vec![0.0; n];
+
+    // Compute dy/dt for each point using finite differences
+    for i in 0..n {
+        if i == 0 {
+            dydt[i] = -y[i] * (y[i + 1] - y[n - 1]) / 2.0 + 0.1 * (y[n - 1] - 2.0 * y[i] + y[i + 1]) / ((n - 1) as f64).powi(2);
+        } else if i == n - 1 {
+            dydt[i] = -y[i] * (y[0] - y[i - 1]) / 2.0 + 0.1 * (y[i - 1] - 2.0 * y[i] + y[0]) / ((n - 1) as f64).powi(2);
+        } else {
+            dydt[i] = -y[i] * (y[i + 1] - y[i - 1]) / 2.0 + 0.1 * (y[i - 1] - 2.0 * y[i] + y[i + 1]) / ((n - 1) as f64).powi(2);
+        }
+    }
+
+    dydt
+}
+
+fn main() {
+    // Define parameters
+    let n = 10; // Number of grid points
+    let y0: Vec<f64> = (0..n).map(|i| (2.0 * std::f64::consts::PI * i as f64 / (n as f64)).cos()).collect(); // Initial condition (cosine wave)
+    let t0 = 0.0; // Initial time
+    let t_end = 2.0; // End time
+
+    // Run RK4 method
+    let _result = rk4(f, n, y0, t0, t_end);
+}
