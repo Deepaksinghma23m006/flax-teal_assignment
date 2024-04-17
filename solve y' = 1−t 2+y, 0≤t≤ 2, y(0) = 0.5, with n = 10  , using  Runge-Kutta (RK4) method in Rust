@@ -1,0 +1,64 @@
+use std::f64;
+
+// Define a struct to hold the result of RK4
+struct RK4Result {
+    t_values: Vec<f64>,
+    y_values: Vec<f64>,
+}
+
+// Implement RK4 for a given function f
+fn rk4<F>(f: F, n: usize, y0: f64, t0: f64, t_end: f64) -> RK4Result
+where
+    F: Fn(f64, f64) -> f64,
+{
+    // Initialize vectors to store time and solution values
+    let mut t_values = vec![t0];
+    let mut y_values = vec![y0];
+    let h = (t_end - t0) / (n as f64); // Calculate step size
+
+    // Print initial condition
+    println!("At t = {:.4}, value of y is = {:.4}", t0, y0);
+
+    // Perform RK4 iterations
+    for _ in 0..n {
+        let ti = *t_values.last().unwrap(); // Get the last time value
+        let yi = *y_values.last().unwrap(); // Get the last solution value
+        let k1 = h * f(yi, ti); // Compute slopes
+        let k2 = h * f(yi + k1 / 2.0, ti + h / 2.0);
+        let k3 = h * f(yi + k2 / 2.0, ti + h / 2.0);
+        let k4 = h * f(yi + k3, ti + h);
+        let y_i_plus_1 = yi + (k1 + 2.0 * (k2 + k3) + k4) / 6.0; // Compute next solution value
+        let ti_plus_1 = ti + h; // Compute next time value
+        // Print current iteration
+        println!("for t = {:.4}, value of y is = {:.4}", ti_plus_1, y_i_plus_1);
+
+        // Store the next time and solution values
+        t_values.push(ti_plus_1);
+        y_values.push(y_i_plus_1);
+    }
+
+    // Return the result
+    RK4Result { t_values, y_values }
+}
+
+// Define the function f(y, t)
+fn f(y: f64, t: f64) -> f64 {
+    1.0 - t.powi(2) + y
+}
+
+fn main() {
+    // Define parameters
+    let n = 10; // Number of steps
+    let y0 = 0.5; // Initial condition
+    let t0 = 0.0;
+    let t_end = 2.0;
+
+    // Run RK4 method
+    let result = rk4(f, n, y0, t0, t_end);
+
+    // Print the results
+    println!("RK4 Results:");
+    for (t, y) in result.t_values.iter().zip(result.y_values.iter()) {
+        println!("At t = {:.4}, value of y is = {:.4}", t, y);
+    }
+}
