@@ -2,6 +2,8 @@
 
 This repository contains the implementation of the Burgers' equation solver using the Runge-Kutta method of fourth order (RK4) in Python. The project includes the mathematical formulation, numerical method, Python code, and output results.
 
+## latex code- https://www.overleaf.com/read/zhtvfpcwdvzj#4635fb
+
 ## Table of Contents
 
 - [Introduction](#introduction)
